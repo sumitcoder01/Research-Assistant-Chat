@@ -1,54 +1,151 @@
-# React + TypeScript + Vite
+# 🤖 Research Assistant — Chat
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, AI-powered research assistant frontend built using **React (TypeScript)**, **Tailwind CSS**, and **Three.js** for enhanced visuals.  
+Integrates seamlessly with the Automated Research Assistant API.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## Expanding the ESLint configuration
+- 🧠 Chat with AI using top LLM providers (OpenAI, Anthropic, DeepSeek, Gemini)
+- 📂 Upload PDFs, DOCX, or images for contextual AI research
+- 🧵 Persistent chat sessions (stored in browser)
+- 🪄 Markdown & code block rendering
+- 🧮 Model & provider selection dropdowns
+- 📜 Session-based message history
+- 🎨 Beautiful, animated background (via Three.js)
+- ⚡ Clean, fast, responsive UI with Tailwind CSS
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🖥️ Demo
+
+> Preview the Application:  
+> 🔗 [https://research-assistant-chat.lovable.app](https://research-assistant-chat.lovable.app)
+
+---
+
+## 🧰 Tech Stack
+
+| Tech             | Description                      |
+|------------------|----------------------------------|
+| React (TypeScript) | Core frontend framework        |
+| Tailwind CSS     | Styling                          |
+| Three.js         | Background animation / visuals   |
+| localStorage     | Session persistence              |
+| Axios / Fetch    | API communication                |
+
+---
+
+## 📦 Installation
+
+```bash
+git clone https://github.com/sumitcoder01/Research-Assistant-Chat.git
+cd Research-Assistant-Chat
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+````
+
+> Ensure Node.js ≥ 18.x and npm ≥ 9.x are installed.
+
+---
+
+## ⚙️ Environment Setup
+
+Create a `.env` file with:
+
+```env
+VITE_BACKEND_BASE_URL= backend url
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🧑‍💻 Folder Structure
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+src/
+│
+├── components/        # Reusable UI components (chat bubble, input, dropdowns)
+├── pages/             # App pages (Home.tsx, NotFound.tsx)
+├── hooks/             # Custom React hooks
+├── services/          # API service (axios wrappers)
+├── store/             # Zustand or context-based state
+├── utils/             # Utility functions (date, storage)
+├── assets/            # Icons, images, backgrounds
+└── App.tsx            # Main app entry
+```
+
+---
+
+## 🔌 API Endpoints
+
+| Feature                | Endpoint                                    |
+| ---------------------- | ------------------------------------------- |
+| ✅ Check Status         | `GET /`                                     |
+| 🆕 Create Session      | `POST /api/v1/sessions`                     |
+| 🧠 Submit Query        | `POST /api/v1/query`                        |
+| 📜 Get Session History | `GET /api/v1/sessions/{session_id}/history` |
+| 📂 Upload Documents    | `POST /api/v1/documents/upload`             |
+
+---
+
+## 📚 Usage Guide
+
+### 🧵 Chat Sessions
+
+* Max 10 stored in localStorage
+* Newest shown first
+* Create via `+` icon (custom name) or on sending first message (default name)
+
+### 💬 Message Input
+
+* Send message by pressing `Enter`
+* Attach files via 📎 icon
+* Select models and providers from dropdowns
+
+### 📦 Supported LLM Providers
+
+| Provider  | Models                             |
+| --------- | ---------------------------------- |
+| openai    | `gpt-4o`, `gpt-4`, `gpt-3.5-turbo` |
+| anthropic | `claude-3-opus`, `claude-3-sonnet` |
+| deepseek  | `deepseek-coder`, `deepseek-chat`  |
+| gemini    | `gemini-2.0-flash`, `gemini-2.0-pro` |
+
+---
+
+## 🌈 Screenshots (Coming Soon)
+
+| Chat Interface              | Model Dropdown & Uploads     |
+| --------------------------- | ---------------------------- |
+| ![](./screenshots/chat.png) | ![](./screenshots/tools.png) |
+
+---
+
+## 🧪 Testing (optional)
+
+```bash
+npm run test
+```
+
+> Unit + integration testing using Vitest / React Testing Library (if enabled)
+
+---
+
+## 🧑‍🤝‍🧑 Contributing
+
+```bash
+# Fork the repo
+# Create your feature branch
+git checkout -b feat/your-feature
+
+# Commit your changes
+git commit -m "✨ Add your feature"
+
+# Push and create PR
+git push origin feat/your-feature
 ```

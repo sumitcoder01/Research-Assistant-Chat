@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ApiResponse, SessionHistoryResponse, UploadResponse, LLMProvider } from '../types';
 import { handleApiError, handleFileUploadError } from '../utils/errorHandler';
 
-const BASE_URL = import.meta.env.BACKEND_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
