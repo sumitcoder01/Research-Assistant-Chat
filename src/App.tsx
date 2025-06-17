@@ -1,35 +1,56 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from 'react';
+import { useChatStore } from './store/chatStore';
+import { useToast } from './hooks/useToast';
+import { apiService } from './services/api';
+import ThreeBackground from './components/ThreeBackground';
+import Sidebar from './components/Sidebar';
+import ChatPanel from './components/ChatPanel';
+import ToastContainer from './components/ToastContainer';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { loadSessions } = useChatStore();
+  const { toasts, removeToast, showError, showSuccess } = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    // Load sessions from localStorage on app start
+    loadSessions();
+
+    // Check API health
+    const checkApiHealth = async () => {
+      try {
+        const health = await apiService.checkHealth();
+        console.log('API Health Check:', health);
+        showSuccess('Connected', 'Successfully connected to research assistant');
+      } catch (error) {
+        console.error('API Health Check Failed:', error);
+        showError('Connection Failed', 'Unable to connect to the research assistant. Some features may not work properly.');
+      }
+    };
+
+    checkApiHealth();
+  }, [loadSessions, showError, showSuccess]);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative transition-colors duration-200">
+      <ThreeBackground />
+      
+      <div className="relative z-10 h-screen flex">
+        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+        <ChatPanel onToggleSidebar={toggleSidebar} />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+    </div>
+  );
 }
 
-export default App
+export default App;
