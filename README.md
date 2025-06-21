@@ -21,7 +21,7 @@ Integrates seamlessly with the Automated Research Assistant API.
 ## 🖥️ Demo
 
 > Preview the Application:  
-> 🔗 [https://research-assistant-chat.lovable.app](https://research-assistant-chat.lovable.app)
+> 🔗 [https://research-assistant-chat.vercel.app](https://research-assistant-chat.vercel.app)
 
 ---
 
