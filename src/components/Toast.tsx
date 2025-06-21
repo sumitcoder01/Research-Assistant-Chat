@@ -19,13 +19,13 @@ const Toast: React.FC<ToastProps> = ({ toast, onRemove }) => {
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
+        return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-700" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
+        return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-700" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />;
+        return <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-700" />;
       case 'info':
-        return <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
+        return <Info className="w-5 h-5 text-blue-600 dark:text-blue-700" />;
     }
   };
 

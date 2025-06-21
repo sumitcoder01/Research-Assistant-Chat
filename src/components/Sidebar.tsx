@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, MessageCircle, Calendar, X } from 'lucide-react';
+import { Plus, MessageCircle, Calendar, X, Loader2, Trash2 } from 'lucide-react'; // Added Loader2 and Trash2
 import { useChatStore } from '../store/chatStore';
+import { apiService } from '../services/api'; // Import apiService
+import { useToast } from '../hooks/useToast';
 import { format } from 'date-fns';
+import { ChatSession } from '../types'; // Import ChatSession type
 import ThemeToggle from './ThemeToggle';
 
 interface SidebarProps {
@@ -13,35 +16,67 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const {
     sessions,
     currentSession,
-    setCurrentSession,
-    createSession
+    setCurrentSessionInStore, // Use renamed store action
+    createSessionInStore,   // Use renamed store action
+    deleteSessionFromStore, // Use new store action
+    isLoading,              // Use loading state from store
+    setLoading,             // Use loading state from store
   } = useChatStore();
+
+  const { showError, showSuccess } = useToast();
   
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [newSessionName, setNewSessionName] = useState('');
 
-  const handleCreateSession = () => {
-    if (sessions.length >= 10) {
-      // This will be handled by the store automatically
+  const handleCreateSession = async () => {
+    if (isLoading) return; // Prevent multiple requests
+
+    setLoading(true);
+    try {
+      // 1. Call API to create the session on the backend
+      const newSessionData = await apiService.createSession();
+
+      // 2. Use the backend-provided ID to create the session in the local store
+      const sessionName = newSessionName.trim() || undefined; // Use user input or let store create default
+      const newLocalSession = createSessionInStore(newSessionData.session_id, sessionName);
+
+      // 3. Set the new session as the current one
+      setCurrentSessionInStore(newLocalSession);
+
+      showSuccess("New Session", `Session "${newLocalSession.name}" created successfully.`);
+
+    } catch (error) {
+      // Use your error handler for a user-friendly message
+      const { handleApiError } = await import('../utils/errorHandler');
+      const friendlyError = handleApiError(error);
+      showError(friendlyError.title, friendlyError.message);
+    } finally {
+      // Reset state regardless of success or failure
+      setLoading(false);
+      setShowNameDialog(false);
+      setNewSessionName('');
     }
-    
-    const session = createSession(newSessionName.trim() || undefined);
-    setCurrentSession(session);
-    setShowNameDialog(false);
-    setNewSessionName('');
-    
+
     // Close sidebar on mobile after creating session
     if (window.innerWidth < 1024) {
       onClose();
     }
   };
 
-  const handleSessionClick = (session: any) => {
-    setCurrentSession(session);
+  const handleSessionClick = (session: ChatSession) => { // Use ChatSession type
+    setCurrentSessionInStore(session); // Use renamed store action
     
-    // Close sidebar on mobile after selecting session
     if (window.innerWidth < 1024) {
       onClose();
+    }
+  };
+
+  const handleDeleteSession = (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation(); // Prevent handleSessionClick from firing
+    // Optional: Add a confirmation dialog
+    if (window.confirm("Are you sure you want to delete this chat session?")) {
+      deleteSessionFromStore(sessionId);
+      showSuccess("Session Deleted", "The chat session has been removed.");
     }
   };
 
@@ -50,8 +85,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
@@ -72,10 +108,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Research Assistant
               </h2>
-              {/* Mobile Close Button */}
               <button
                 onClick={onClose}
                 className="lg:hidden p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                aria-label="Close sidebar"
               >
                 <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
@@ -84,9 +120,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={() => setShowNameDialog(true)}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl transition-all duration-200 hover:shadow-lg group"
+            disabled={isLoading || showNameDialog} // Disable if loading or dialog is open
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl transition-all duration-200 hover:shadow-lg group disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
-            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" />
+            {isLoading && showNameDialog ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" />
+            )}
             <span className="font-medium">New Chat</span>
           </button>
         </div>
@@ -104,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <div
                 key={session.session_id}
                 onClick={() => handleSessionClick(session)}
-                className={`p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-200 border group ${
+                className={`relative p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-200 border group ${
                   currentSession?.session_id === session.session_id
                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-md'
                     : 'bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:border-gray-300/50 dark:hover:border-gray-600/50 hover:shadow-md'
@@ -131,6 +172,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     </p>
                   </div>
                 </div>
+                {/* Delete Button */}
+                <button
+                  onClick={(e) => handleDeleteSession(e, session.session_id)}
+                  className="absolute top-2 right-2 p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100/50 dark:hover:bg-red-900/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label={`Delete chat session: ${session.name}`}
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))
           )}
@@ -139,9 +188,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* New Session Dialog */}
       {showNameDialog && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4" aria-modal="true" role="dialog">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4" id="dialog-title">
               Create New Chat Session
             </h3>
             <input
@@ -150,20 +199,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               onChange={(e) => setNewSessionName(e.target.value)}
               placeholder="Enter chat name (optional)"
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              onKeyPress={(e) => e.key === 'Enter' && handleCreateSession()}
+              onKeyPress={(e) => !isLoading && e.key === 'Enter' && handleCreateSession()}
+              disabled={isLoading}
               autoFocus
+              aria-labelledby="dialog-title"
             />
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowNameDialog(false)}
-                className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 px-4 py-2.5 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                disabled={isLoading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateSession}
-                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl transition-colors"
+                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                disabled={isLoading}
               >
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create
               </button>
             </div>

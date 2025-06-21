@@ -1,16 +1,19 @@
-import axios from 'axios';
-import { ApiResponse, SessionHistoryResponse, UploadResponse, LLMProvider } from '../types';
+// src/services/api.ts
+import axios, { AxiosError } from 'axios';
+import { QueryResponse, SessionHistoryResponse, UploadResponse, LLMProvider } from '../types';
 import { handleApiError, handleFileUploadError } from '../utils/errorHandler';
 
-const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 300000,
+  timeout: 300000, // 5 minutes default
 });
 
 export const apiService = {
-  // Health check
+  /**
+   * Checks the health of the backend API.
+   */
   async checkHealth(): Promise<{ status: string }> {
     try {
       const response = await api.get('/');
@@ -21,7 +24,10 @@ export const apiService = {
     }
   },
 
-  // Create new research session
+  /**
+   * Creates a new research session on the backend.
+   * @param sessionId Optional specific ID to suggest for the new session.
+   */
   async createSession(sessionId?: string): Promise<{ session_id: string; message: string }> {
     try {
       const response = await api.post('/api/v1/sessions', sessionId ? { session_id: sessionId } : {});
@@ -32,18 +38,29 @@ export const apiService = {
     }
   },
 
-  // Submit research query
+  /**
+   * Submits a research query to the backend.
+   * This can be a simple text query or include parameters for document processing.
+   * It sends data as 'multipart/form-data' to align with the backend endpoint's signature.
+   */
   async submitQuery(
-    query: string,
-    sessionId: string,
-    llmProvider: LLMProvider
-  ): Promise<ApiResponse> {
+    params: {
+      query: string;
+      sessionId: string;
+      llmProvider: LLMProvider;
+      llmModel: string;
+    }
+  ): Promise<QueryResponse> {
     try {
-      const response = await api.post('/api/v1/query', {
-        query,
-        session_id: sessionId,
-        llm_provider: llmProvider
-      });
+
+      const data = {
+        query:params.query,
+        session_id:params.sessionId,
+        llm_provider:params.llmProvider,
+        llm_model:params.llmModel,
+      };
+
+      const response = await api.post<QueryResponse>('/api/v1/query', data);
       return response.data;
     } catch (error) {
       console.error('Query submission error:', error);
@@ -52,7 +69,9 @@ export const apiService = {
     }
   },
 
-  // Get session history
+  /**
+   * Retrieves the message history for a given session.
+   */
   async getSessionHistory(sessionId: string, limit?: number): Promise<SessionHistoryResponse> {
     try {
       const url = `/api/v1/sessions/${sessionId}/history${limit ? `?limit=${limit}` : ''}`;
@@ -64,46 +83,51 @@ export const apiService = {
     }
   },
 
-  // Upload documents
+  /**
+   * Uploads one or more documents for processing.
+   */
   async uploadDocuments(
     sessionId: string,
-    embeddingProvider: LLMProvider,
-    files: File[]
+    files: File[],
+    embeddingProvider: string = 'google' // Default to 'google' if not specified
   ): Promise<UploadResponse> {
     try {
-      // Validate files before upload
+      // Client-side validation
       const maxSize = 10 * 1024 * 1024; // 10MB
-      const allowedTypes = ['.pdf', '.doc', '.docx', '.txt'];
-      
+      const allowedTypes = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg'];
+
       for (const file of files) {
         if (file.size > maxSize) {
-          throw new Error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+          throw new Error(`File "${file.name}" is too large (max 10MB).`);
         }
-        
         const extension = '.' + file.name.split('.').pop()?.toLowerCase();
         if (!allowedTypes.includes(extension)) {
-          throw new Error(`File "${file.name}" has an unsupported format. Please use PDF, DOC, DOCX, or TXT files.`);
+          throw new Error(`File "${file.name}" format not supported. Allowed: ${allowedTypes.join(', ')}.`);
         }
       }
 
       const formData = new FormData();
       formData.append('session_id', sessionId);
       formData.append('embedding_provider', embeddingProvider);
-      
+
       files.forEach((file) => {
-        formData.append('files', file);
+        formData.append('files', file, file.name);
       });
 
-      const response = await api.post('/api/v1/documents/upload', formData, {
+      const response = await api.post<UploadResponse>('/api/v1/documents/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        timeout: 600000, // 60 seconds for file uploads
+        timeout: 600000, // 10 minutes for potentially large file processing
       });
       return response.data;
     } catch (error) {
-      console.error('File upload error:', error);
-      const friendlyError = handleFileUploadError(error);
+      console.error('File upload error in apiService:', error);
+      if (!(error instanceof AxiosError)) {
+        const friendlyError = handleFileUploadError(error);
+        throw new Error(friendlyError.message);
+      }
+      const friendlyError = handleApiError(error);
       throw new Error(friendlyError.message);
     }
   }

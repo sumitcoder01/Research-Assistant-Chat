@@ -91,3 +91,22 @@ pre::-webkit-scrollbar-thumb {
 .table-container::-webkit-scrollbar-thumb {
   @apply bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500;
 }
+
+.message-bubble-enter {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+.message-bubble-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+.message-bubble-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.message-bubble-exit-active {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: opacity 300ms ease-in, transform 300ms ease-in;
+}
