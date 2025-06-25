@@ -16,7 +16,7 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [copiedMessage, setCopiedMessage] = useState(false);
-  const [displayedContent, setDisplayedContent] = useState('');
+  const [displayedContent, setDisplayedContent] = useState<string>("");
   const [showBubble, setShowBubble] = useState(false);
   const nodeRef = useRef(null);
 
@@ -26,25 +26,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   // Effect for streaming text
   useEffect(() => {
     setShowBubble(true); // Trigger the fade-in animation
-
-    if (isAI && !message.isLoading && !message.isError) {
-      setDisplayedContent('');
-      let index = 0;
-      const content = message.content;
-      const intervalId = setInterval(() => {
-        if (index < content.length) {
-          setDisplayedContent((prev) => prev + content[index]);
-          index++;
-        } else {
-          clearInterval(intervalId);
-        }
-      }, 10); // Adjust streaming speed here (lower is faster)
-
-      return () => clearInterval(intervalId);
-    } else {
-      // For human messages, errors, or loading, show content immediately
-      setDisplayedContent(message.content);
-    }
+    setDisplayedContent(message.content);
   }, [message.content, isAI, message.isLoading, message.isError]);
 
   const handleCopyCode = async (code: string) => {
