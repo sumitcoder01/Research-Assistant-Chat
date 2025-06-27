@@ -40,7 +40,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
       <ThreeBackground />
       
       <div className="relative z-10 h-screen flex">

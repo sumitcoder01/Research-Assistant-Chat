@@ -154,19 +154,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onToggleSidebar }) => {
         });
 
         // Then, add individual snippets as separate messages
-        const snippetMaxLength = 250; // Max length for each snippet
         uploadApiResponse.filenames.forEach((filename, index) => {
           const text = uploadApiResponse.extracted_texts[index];
           let snippetContent = "Could not extract text from this file, or the file was empty.";
+          
           if (text && text.trim() !== "") {
-            snippetContent = `"${text.substring(0, snippetMaxLength)}${text.length > snippetMaxLength ? '...' : ''}"`;
+            snippetContent = text;
           }
           
           addMessageToStore(currentSession.session_id, {
             role: 'ai', // Display as an informative AI message
             content: `📄 **${filename}**: ${snippetContent}`,
             timestamp: new Date(),
-            documentStatus: `Processed: ${filename}` // Example detailed status
           });
         });
         // No need to return here, the overall message is handled below if snippets aren't added

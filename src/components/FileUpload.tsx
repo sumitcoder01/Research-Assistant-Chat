@@ -99,13 +99,28 @@ const FileUpload: React.FC<FileUploadProps> = ({ currentSessionId, onUploadCompl
     }
   };
 
+  const acceptedFileExtensions = [
+    // PDFs
+    '.pdf',
+    // Word Docs
+    '.doc', '.docx',
+    // Plain Text & Markdown
+    '.txt', '.sent', '.md', '.rtf',
+    // Images
+    '.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif',
+    // Data Formats
+    '.json', '.csv',
+    // Excel
+    '.xlsx'
+    ].join(','); // Join with a comma
+
   return (
     <div className="space-y-3">
       <input
         ref={fileInputRef}
         type="file"
         multiple
-        accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+        accept={acceptedFileExtensions}
         onChange={handleFilesChange}
         className="hidden"
         disabled={isUploading || !currentSessionId}
